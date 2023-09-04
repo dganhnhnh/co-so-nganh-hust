@@ -1,0 +1,6 @@
+[submodule "discrete-maths-coding"]
+	path = discrete-maths-coding
+	url = https://github.com/dganhnhnh/discrete-maths-coding.git
+[submodule "kythuatlaptrinh-hust"]
+	path = kythuatlaptrinh-hust
+	url = https://github.com/dganhnhnh/kythuatlaptrinh-hust.git
