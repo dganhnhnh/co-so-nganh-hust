@@ -1,84 +1,95 @@
-#include <iostream>
-#include <vector>
-#include <algorithm>
-
+#include <bits/stdc++.h>
 using namespace std;
 
-struct Edge {
-    int u, v, weight;
-    Edge(int uu, int vv, int w) : u(uu), v(vv), weight(w) {}
-};
+class DSU
+{
+    int *p;
+    int *r;
 
-struct DisjointSet {
-    vector<int> parent, rank;
+public:
+    DSU(int V)
+    {
+        p = new int[V];
+        r = new int[V];
 
-    DisjointSet(int n) {
-        parent.resize(n);
-        rank.resize(n, 0);
-        for (int i = 0; i < n; i++) {
-            parent[i] = i;
+        for (int i = 0; i < V; i++)
+        {
+            p[i] = -1;
+            r[i] = 1;
         }
     }
 
-    int find(int x) {
-        if (x != parent[x]) {
-            parent[x] = find(parent[x]);
-        }
-        return parent[x];
+    int find(int i)
+    {
+        if (p[i] == -1) return i;
+        return p[i] = find(p[i]);
     }
 
-    void unionSets(int x, int y) {
-        int rootX = find(x);
-        int rootY = find(y);
-        if (rootX != rootY) {
-            if (rank[rootX] < rank[rootY]) {
-                parent[rootX] = rootY;
-            } else if (rank[rootX] > rank[rootY]) {
-                parent[rootY] = rootX;
-            } else {
-                parent[rootY] = rootX;
-                rank[rootX]++;
+    void unite(int u, int v)
+    {
+        int p_u = find(u);
+        int p_v = find(v);
+
+        if (p_u != p_v)
+        {
+            if (r[p_u] < r[p_v])        p[p_u] = p_v;
+            else if (r[p_u] > r[p_v])   p[p_v] = p_u;
+            else
+            {
+                p[p_v] = p_u;
+                r[p_u] += 1;
             }
         }
     }
 };
 
-bool compareEdges(const Edge& a, const Edge& b) {
-    return a.weight < b.weight;
-}
+class Graph
+{
+    vector<vector<int>> edges;
+    int V;
 
-int kruskalMST(int N, vector<Edge>& edges) {
-    sort(edges.begin(), edges.end(), compareEdges);
-    DisjointSet ds(N);
-    int minimumSpanningTreeWeight = 0;
-    
-    for (const Edge& edge : edges) {
-        int u = edge.u;
-        int v = edge.v;
-        int weight = edge.weight;
+public:
+    Graph(int V) { this->V = V; }
 
-        if (ds.find(u) != ds.find(v)) {
-            ds.unionSets(u, v);
-            minimumSpanningTreeWeight += weight;
-        }
+    void addEdge(int u, int v, int w)
+    {
+        edges.push_back({w, u, v});
     }
 
-    return minimumSpanningTreeWeight;
-}
+    void mst()
+    {
+        sort(edges.begin(), edges.end());
 
-int main() {
-    int N, M;
-    cin >> N >> M;
+        DSU s(V);
+        int ans = 0;
+        for (auto edge : edges)
+        {
+            int w = edge[0];
+            int u = edge[1];
+            int v = edge[2];
 
-    vector<Edge> edges;
-    for (int i = 0; i < M; i++) {
+            if (s.find(u) != s.find(v))
+            {
+                s.unite(u, v);
+                ans += w;
+            }
+        }
+        cout << ans;
+    }
+};
+
+int main()
+{
+    int n, m;
+    cin >> n >> m;
+    Graph g(n);
+    for (int i = 0; i < m; i++)
+    {
         int u, v, w;
         cin >> u >> v >> w;
-        edges.push_back(Edge(u, v, w));
+        g.addEdge(u, v, w);
     }
-
-    int result = kruskalMST(N, edges);
-    cout << result << endl;
+    g.mst();
 
     return 0;
 }

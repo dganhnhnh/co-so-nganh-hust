@@ -1,49 +1,46 @@
-#include <iostream>
+#include <bits/stdc++.h>
 #include <vector>
-#include <unordered_set>
-
 using namespace std;
 
 vector<vector<int>> graph;
-int N;  
+int n, m; int res = -1;
+// dynamic allocate for x, visited
+int *x; bool *visited;
 
-bool isHamiltonianCycle(int v, int start, vector<bool>& visited, int visitedCount) {
-    visited[v] = true;
-    visitedCount++;
-
-    if (visitedCount == N) {
-        if (graph[v][start])
-            return true;
+void print_arr(int x[], int n){
+    cout << "x: ";
+    for (int i=1; i<=n+1; i++){
+        cout << x[i] << " "  ;
     }
-
-    for (int u = 0; u < N; u++) {
-        if (graph[v][u] && !visited[u]) {
-            if (isHamiltonianCycle(u, start, visited, visitedCount))
-                return true;
-        }
-    }
-
-    visited[v] = false; 
-    return false;
+    cout << endl;
 }
 
-bool isHamiltonianPath(int v, vector<bool>& visited, int visitedCount) {
-    visited[v] = true;
-    visitedCount++;
+void TRY(int k, int n){
 
-    if (visitedCount == N) {
-        return true;
-    }
+    for (int i = 0; i < graph[x[k]].size(); i++) {
+        // cout << "k: " << k << endl;
+        // cout << "x[k]: " << x[k] << endl;
 
-    for (int u = 0; u < N; u++) {
-        if (graph[v][u] && !visited[u]) {
-            if (isHamiltonianPath(u, visited, visitedCount))
-                return true;
+        int temp = graph[x[k]][i];
+        // cout << temp << " " << visited[temp] << endl ;
+        if (k == n && temp == x[1]) {
+            x[k+1] = temp;
+            // print_arr(x,n );
+            res = 1;
+            break;
+        }
+        if (!visited[temp]) {
+            x[k+1] = temp;
+            
+            visited[temp] = true;
+            // print_arr(x,n );
+            TRY(k+1,n);
+            // undo choice
+            visited[temp] = false;
+            x[k+1] = -1;
         }
     }
-
-    visited[v] = false; 
-    return false;
+    if (res == 1) return;
 }
 
 int main() {
@@ -51,35 +48,32 @@ int main() {
     cin >> T;
 
     while (T--) {
-        int m;
-        cin >> N >> m;
-        graph = vector<vector<int>>(N, vector<int>(N, 0));
+        cin >> n >> m;
+        x = new int[n+2];
+        visited = new bool[n+1];
+        memset(x, -1, sizeof(x[0]) * (n+2));
+
+        for (int i = 0; i <= n; i++) {
+            graph.push_back(vector<int>());
+        }
 
         for (int i = 0; i < m; i++) {
             int u, v;
             cin >> u >> v;
-            u--;
-            v--;
-            graph[u][v] = 1;
-            graph[v][u] = 1;
+
+            graph[u].push_back(v);
+            graph[v].push_back(u); 
         }
 
-        vector<bool> visited(N, false);
-        bool isHamiltonian = false;
-
-        for (int i = 0; i < N; i++) {
-            if (isHamiltonianCycle(i, i, visited, 1) || isHamiltonianPath(i, visited, 1)) {
-                isHamiltonian = true;
-                break;
-            }
-            visited.assign(N, false); 
+        for (int i = 1; i <= n; i++) {
+            x[1] = i; visited[i] = true;
+            TRY(1, n);
+            if (res == 1) break;
+            // visited all false
+            memset(visited, false, sizeof(visited[0]) * (n+1));
         }
-
-        if (isHamiltonian)
-            cout << "1" << endl;
-        else
-            cout << "0" << endl;
+        if (res == 1) cout << "1"<<endl;
+        else cout << "0"<<endl;
     }
-
     return 0;
 }
