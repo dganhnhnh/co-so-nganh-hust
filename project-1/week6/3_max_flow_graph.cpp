@@ -5,13 +5,14 @@
 using namespace std;
 
 typedef pair<int, int> ip;
+unordered_map<int, int> parentMap;
 
 class Graph
 {
 	int V;
 	list<ip> *adj;
     // dynamically allocate everytime run BFS
-    int *path_flow;
+    // unordered_map<int, int> parentMap;
 
 public:
 	Graph(int V)
@@ -23,59 +24,118 @@ public:
 	{
 		adj[u].push_back(make_pair(v, w));
 	}
-    void BFS(int s);
-    int fordFulkerson(int s, int t);
+    int fordFulkerson(int s, int t,unordered_map<int, int>& parentMap);
+    bool bfs(int source, int destination, unordered_map<int, int>& parentMap);
 };
 
-void Graph::BFS(int start){
-    queue<int> q;
-    int nodesCount = V-1;
-    vector<bool> visited(nodesCount, false);
-    int nodesVisited=0;
 
-    q.push(start);
-    visited[start] = true;
-    nodesVisited=1;
+void printPath(const unordered_map<int, int>& parentMap, int source, int destination) {
+    vector<int> path;
+    int current = destination;
+
+    // Reconstruct the path from destination to source
+    while (current != source) {
+        path.push_back(current);
+        current = parentMap.at(current);
+    }
+
+    // Add the source vertex to the path
+    path.push_back(source);
+
+    // Print the path in reverse order
+    cout << "Path from " << source << " to " << destination << ": ";
+    for (int i = path.size() - 1; i > 0; --i) {
+        cout << path[i] << " -> ";
+    }
+    cout << path[0] << endl;
 }
-void bfs(vector<vector<pair<int, int>>>& graph, int source, int destination) {
-    int V = graph.size();
+
+void printParentMap(const unordered_map<int, int>& parentMap) {
+    cout << "Parent Map: " << endl;
+    for (const auto& pair : parentMap) {
+        cout << pair.first << " -> " << pair.second << endl;
+    }
+}
+
+//  BUG vong lap vo han
+
+bool Graph::bfs(int source, int destination,unordered_map<int, int>& parentMap) {
     vector<bool> visited(V, false);
     queue<int> q; 
-    unordered_map<int, int> parentMap;
 
     q.push(source);
     visited[source] = true;
+    printParentMap(parentMap);
 
     while (!q.empty()) {
         int current = q.front();
         q.pop();
 
-        for (const auto& neighbor : graph[current]) {
-            int nextVertex = neighbor.first;
-            int weight = neighbor.second;
-
+        list<pair<int, int>>::iterator i;
+        for (i = adj[current].begin(); i != adj[current].end(); ++i)
+        {
+            int nextVertex = (*i).first;
             if (!visited[nextVertex]) {
                 q.push(nextVertex);
                 visited[nextVertex] = true;
-                parentMap[nextVertex] = current; // Store the parent of the neighbor
+                parentMap[nextVertex] = current; 
             }
         }
     }
 
+    printParentMap(parentMap);
+
     if (visited[destination]) {
         // Path exists, print it
-        // printPath(parentMap, source, destination);
+        printPath(parentMap, source, destination);
+        return true;
     } else {
-        cout << "Path does not exist." << endl;
+        return false;
     }
 }
 
-int Graph::fordFulkerson(int s, int t)
+int Graph::fordFulkerson(int s, int t,unordered_map<int, int>& parentMap)
 {
-    // find path from src to dest with BFS
-    // while path exists
-    //     find min flow in path
-    //     update residual graph
+    while (bfs(s, t, parentMap))
+    {
+        int maxFlow = 0;
+        // find min flow in path
+        int minFlow = INT_MAX;
+        // cout<< "iterate "<<endl;
+        for (int v = t; v != s; v = parentMap[v])
+        {
+            int u = parentMap[v];
+            for (const auto& neighbor : adj[u]) {
+                if (neighbor.first == v) {
+                    minFlow = min(minFlow, neighbor.second);
+                    break;
+                }
+            }
+        }
+        // update residual graph
+        for (int v = t; v != s; v = parentMap[v])
+        {
+            int u = parentMap[v];
+            for (auto& neighbor : adj[u]) {
+                if (neighbor.first == v) {
+                    neighbor.second -= minFlow;
+                    break;
+                }
+            }
+            bool found = false;
+            for (auto& neighbor : adj[v]) {
+                if (neighbor.first == u) {
+                    neighbor.second += minFlow;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                adj[v].push_back(make_pair(u, minFlow));
+            }
+        }
+        
+    }
 
     return 0;
 }
@@ -93,5 +153,7 @@ int main(){
 		cin >> u >> v >> w;
 		g.addEdge(u, v, w);
 	}
+
+    g.fordFulkerson(s, t, parentMap);
 
 }
