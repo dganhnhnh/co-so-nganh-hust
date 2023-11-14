@@ -1,20 +1,24 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include <iomanip>
 #include <unordered_map>
 #include <map>
 #include <algorithm>
-#include <tuple>
 
 using namespace std;
 
-using Order = tuple<string, string, int, string, string>;
+struct Order {
+    string cID;
+    string pID;
+    int price;
+    string sID;
+    string timeStamp;
+};
 
 Order parseOrder(const string& line) {
     Order order;
     istringstream iss(line);
-    iss >> get<0>(order) >> get<1>(order) >> get<2>(order) >> get<3>(order) >> get<4>(order);
+    iss >> order.cID >> order.pID >> order.price >> order.sID >> order.timeStamp;
     return order;
 }
 
@@ -26,15 +30,14 @@ int main() {
 
     string line;
     while (getline(cin, line) && line != "#") {
-        Order order = parseOrder(line);
-        orders.push_back(order);
-        shopRevenue[get<3>(order)] += get<2>(order);
-        customerShopRevenue[{get<0>(order), get<3>(order)}] += get<2>(order);
-        totalRevenue += get<2>(order);
+        orders.emplace_back(parseOrder(line));
+        shopRevenue[orders.back().sID] += orders.back().price;
+        customerShopRevenue[{orders.back().cID, orders.back().sID}] += orders.back().price;
+        totalRevenue += orders.back().price;
     }
 
     sort(orders.begin(), orders.end(), [](const Order& a, const Order& b) {
-        return get<4>(a) < get<4>(b);
+        return a.timeStamp < b.timeStamp;
     });
 
     while (getline(cin, line) && line != "#") {
@@ -59,11 +62,11 @@ int main() {
             int periodRevenue = 0;
 
             int startIdx = lower_bound(orders.begin(), orders.end(), startTime, [](const Order& a, const string& b) {
-                return get<4>(a) < b;
+                return a.timeStamp < b;
             }) - orders.begin();
 
             int endIdx = upper_bound(orders.begin(), orders.end(), endTime, [](const string& a, const Order& b) {
-                return a < get<4>(b);
+                return a < b.timeStamp;
             }) - orders.begin();
 
             if (endIdx >= orders.size()) {
@@ -71,7 +74,7 @@ int main() {
             }
 
             for (int i = startIdx; i < endIdx; i++) {
-                periodRevenue += get<2>(orders[i]);
+                periodRevenue += orders[i].price;
             }
 
             cout << periodRevenue << endl;

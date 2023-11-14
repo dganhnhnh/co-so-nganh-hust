@@ -98,7 +98,8 @@ int main() {
             int subCount = 0;
             auto startIt = lower_bound(submissions.begin(), submissions.end(), fromTime, [](const Submission &a, const string &b)
                                        { return a.timeStamp < b; });
-            auto endIt = upper_bound(submissions.begin(), submissions.end(), toTime, [](const string &a, const Submission &b)
+                                    //    xem lai cai nay
+            auto endIt = upper_bound(startIt, submissions.end(), toTime, [](const string &a, const Submission &b)
                                      { return a < b.timeStamp; });
 
             cout << distance(startIt, endIt) << endl;
