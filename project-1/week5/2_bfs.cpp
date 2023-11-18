@@ -4,7 +4,6 @@
 using namespace std;
 
 void BFS(vector<vector<int>> graph, int start){
-
     queue<int> q;
     int nodesCount = graph.size()-1;
     vector<bool> visited(nodesCount, false);

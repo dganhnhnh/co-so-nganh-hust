@@ -61,22 +61,25 @@ int main() {
 
             int periodRevenue = 0;
 
-            int startIdx = lower_bound(orders.begin(), orders.end(), startTime, [](const Order& a, const string& b) {
+            auto startIdx = lower_bound(orders.begin(), orders.end(), startTime, [](const Order& a, const string& b) {
                 return a.timeStamp < b;
-            }) - orders.begin();
+            });
 
-            int endIdx = upper_bound(orders.begin()+startIdx, orders.end(), endTime, [](const string& a, const Order& b) {
+            auto endIdx = upper_bound(startIdx, orders.end(), endTime, [](const string& a, const Order& b) {
                 return a < b.timeStamp;
-            }) - orders.begin();
+            });
 
-            if (endIdx >= orders.size()) {
-                endIdx = orders.size();
+            auto startIt = startIdx - orders.begin();
+            auto endIt = endIdx - orders.begin();
+
+            if (endIt >= orders.size()) {
+                endIt = orders.size();
             }
 
-            for (int i = startIdx; i < endIdx; i++) {
+            for (int i = startIt; i < endIt; i++) {
                 periodRevenue += orders[i].price;
             }
-
+            // cout << "startIdx: " << startIdx - orders.begin() << endl;
             cout << periodRevenue << endl;
         }
     }
