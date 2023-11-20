@@ -1,9 +1,7 @@
-#include <iostream>
-#include <vector>
+#include <bits/stdc++.h> 
 #include <sstream>
-#include <unordered_map>
+#include <vector>
 #include <map>
-#include <algorithm>
 
 using namespace std;
 
@@ -12,13 +10,24 @@ struct Order {
     string pID;
     int price;
     string sID;
-    string timeStamp;
+    string timePoint;
 };
+
+int ord(char c)
+{
+    return c-'0' ;
+}
+
+int convertTimetoInt(string c)
+{
+    return (ord(c[0])*10+ord(c[1]))*60*60
+          +(ord(c[3])*10+ord(c[4]))*60+(ord(c[6])*10+ord(c[7])) ;
+}
 
 Order parseOrder(const string& line) {
     Order order;
     istringstream iss(line);
-    iss >> order.cID >> order.pID >> order.price >> order.sID >> order.timeStamp;
+    iss >> order.cID >> order.pID >> order.price >> order.sID >> order.timePoint;
     return order;
 }
 
@@ -27,18 +36,20 @@ int main() {
     unordered_map<string, int> shopRevenue;
     map<pair<string, string>, int> customerShopRevenue;
     int totalRevenue = 0;
+    long long s[24*60*60];
 
     string line;
     while (getline(cin, line) && line != "#") {
-        orders.emplace_back(parseOrder(line));
-        shopRevenue[orders.back().sID] += orders.back().price;
-        customerShopRevenue[{orders.back().cID, orders.back().sID}] += orders.back().price;
-        totalRevenue += orders.back().price;
+        Order order = parseOrder(line);
+        orders.push_back(order);
+        shopRevenue[order.sID] += order.price;
+        customerShopRevenue[{order.cID, order.sID}] += order.price;
+        totalRevenue += order.price;
+        s[convertTimetoInt(order.timePoint)]+= order.price;
     }
 
-    sort(orders.begin(), orders.end(), [](const Order& a, const Order& b) {
-        return a.timeStamp < b.timeStamp;
-    });
+    for(int i=1;i<24*60*60;++i)
+        s[i]+=s[i-1];
 
     while (getline(cin, line) && line != "#") {
         if (line == "?total_number_orders") {
@@ -59,25 +70,7 @@ int main() {
             istringstream iss(line.substr(25));
             iss >> startTime >> endTime;
 
-            int periodRevenue = 0;
-
-            int startIdx = lower_bound(orders.begin(), orders.end(), startTime, [](const Order& a, const string& b) {
-                return a.timeStamp < b;
-            }) - orders.begin();
-
-            int endIdx = upper_bound(orders.begin()+startIdx, orders.end(), endTime, [](const string& a, const Order& b) {
-                return a < b.timeStamp;
-            }) - orders.begin();
-
-            if (endIdx >= orders.size()) {
-                endIdx = orders.size();
-            }
-
-            for (int i = startIdx; i < endIdx; i++) {
-                periodRevenue += orders[i].price;
-            }
-
-            cout << periodRevenue << endl;
+            cout<<s[convertTimetoInt(endTime)]-(convertTimetoInt(startTime)==0?0:s[convertTimetoInt(startTime)-1]) ;
         }
     }
 
