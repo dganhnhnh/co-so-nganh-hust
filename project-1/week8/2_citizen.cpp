@@ -1,93 +1,114 @@
-#include <bits/stdc++.h>
+ #include <bits/stdc++.h>
 
 using namespace std;
 
-const int MAXINT = (int)1e5 + 5;
-unordered_map<string, int> errorSubmissionOfUser;
-unordered_map<string, int> pointOfUser;
-long long submissionCount[24 * 60 * 60];
-map<pair<string, string>, int> pointProblem;
-unordered_map<string, int> totalPointOfUser;
+const int MAXYEAR = 30001232;
+long bornAt[MAXYEAR];
+long long bornUntil[MAXYEAR];
+//  code and isAlive
+unordered_map<string, bool> personAlive;
+unordered_map<string, int> mostAliveAncestor;
+int maxDepth = 0;
+// set<string> rootSet;
+unordered_map<int, vector<string>> generation;
 
 int ord(char c)
 {
     return c - '0';
 }
 
-int timeStrToInt(string c)
+int dateStrToInt(string date)
 {
-    return (ord(c[0]) * 10 + ord(c[1])) * 60 * 60 + (ord(c[3]) * 10 + ord(c[4])) * 60 + (ord(c[6]) * 10 + ord(c[7]));
+    int day = ord(date[8]) * 10 + ord(date[9]);
+    int month = ord(date[5]) * 10 + ord(date[6]);
+    int year = ord(date[0]) * 1000 + ord(date[1]) * 100 + ord(date[2]) * 10 + ord(date[3]);
+    return day + month * 100 + year * 10000;
+}
+
+int maxUnrelated()
+{
+    int subset1=0, subset2=0;
+    for (int i = 0; i <= maxDepth; ++i)
+    {
+        if (i % 2 == 0)
+        {
+            subset1 += generation[i].size();
+        }
+        else
+        {
+            subset2 += generation[i].size();
+        }
+    }
+    return max(subset1, subset2);
 }
 
 int main()
 {
-
     ios_base::sync_with_stdio(0);
     cin.tie(0);
-    int numSub = 0;
-    int numErrorSub = 0;
+    int numPeople = 0;
     while (true)
     {
-        string userID, problemID, timePoint, status;
-        int point;
-        cin >> userID;
-        if (userID == "#")
+        string code, date_of_birth, father_code, mother_code, is_alive, region_code;
+        cin >> code;
+        if (code == "*")
             break;
-        cin >> problemID >> timePoint >> status ;
-        cin >> point;
-        submissionCount[timeStrToInt(timePoint)]++;
-        numSub++;
-        if (status == "OK"){
-            // cout << pointOfUser[userID]<< endl<<point <<endl;
-            // pointOfUser[userID] += max(pointOfUser[userID], point);
-            // cout << "OK\n";
-            auto& userProblemPair = pointProblem[{userID, problemID}];
-            userProblemPair = max(userProblemPair, point);
-        }
-        else if (status == "ERR")
+        cin >> date_of_birth >> father_code >> mother_code >>  is_alive>> region_code;
+        bornAt[dateStrToInt(date_of_birth)]++;
+        numPeople++;
+        personAlive[code] = is_alive == "Y";
+        if (father_code != "0000000" and personAlive[father_code])
         {
-            errorSubmissionOfUser[userID]++;
-            numErrorSub++;
-            // cout << numErrorSub<< endl;
+            mostAliveAncestor[code] = mostAliveAncestor[father_code] + 1;
+            maxDepth = max(maxDepth, mostAliveAncestor[code]);
         }
+        if (mother_code != "0000000" and personAlive[mother_code])
+        {
+            mostAliveAncestor[code] = max(mostAliveAncestor[code], mostAliveAncestor[mother_code] + 1);
+            maxDepth = max(maxDepth, mostAliveAncestor[code]);
+        }
+        generation[mostAliveAncestor[code]].push_back(code);
     }
-    for (int i = 1; i < 24 * 60 * 60; ++i)
-        submissionCount[i] += submissionCount[i - 1];
 
-    for (const auto& [userProblem, point] : pointProblem) {
-        totalPointOfUser[userProblem.first] += point;
+    for (int i = 0; i < MAXYEAR; ++i){
+        bornUntil[i] = bornAt[i];
     }
+    for (int i = 1; i < MAXYEAR; ++i){
+        bornUntil[i] += bornUntil[i - 1];
+    }
+
     while (true)
     {
         string type;
         cin >> type;
-        if (type == "#")
+        if (type == "***")
             break;
-        if (type == "?total_number_submissions")
-            cout << numSub;
-        if (type == "?number_error_submision")
+        if (type == "NUMBER_PEOPLE")
+            cout << numPeople;
+        if (type == "NUMBER_PEOPLE_BORN_AT")
         {
-            cout << numErrorSub;
+            string date;
+            cin >> date;
+            // cout << dateStrToInt(date);
+            cout << bornAt[dateStrToInt(date)];
         }
-        if (type == "?number_error_submision_of_user")
-        {
-            string userID;
-            cin >> userID;
-            // cout << "|"<< userID<< "|";
-            cout << errorSubmissionOfUser[userID];
-        }
-        if (type == "?total_point_of_user")
-        {
-            string userID;
-            cin >> userID;
-            // cout << "|"<< userID<< "|";
-            cout << totalPointOfUser[userID];
-        }
-        if (type == "?number_submission_period")
+        if (type == "NUMBER_PEOPLE_BORN_BETWEEN")
         {
             string start, end;
             cin >> start >> end;
-            cout << submissionCount[timeStrToInt(end)] - (timeStrToInt(start) == 0 ? 0 : submissionCount[timeStrToInt(start) - 1]);
+            cout << bornUntil[dateStrToInt(end)] - (dateStrToInt(start) == 0 ? 0 : bornUntil[dateStrToInt(start) - 1]);
+
+        }
+        if (type == "MOST_ALIVE_ANCESTOR")
+        {
+            // father and mother are input before child
+            string code;
+            cin >> code;
+            cout << mostAliveAncestor[code];
+        }
+        if (type == "MAX_UNRELATED_PEOPLE")
+        {
+            cout << maxUnrelated();
         }
         cout << "\n";
     }
